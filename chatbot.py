@@ -23,20 +23,60 @@ def generar_respuesta(mensaje):
 
     mensaje = limpiar_texto(mensaje)
 
-    for sinonimo, palabra_real in SINONIMOS.items():
+    intencion = detectar_intencion(mensaje)
 
-        if sinonimo in mensaje:
-            mensaje = palabra_real
+    if intencion:
+        return f"{NOMBRE_BOT}: {RESPUESTAS[intencion]}"
 
-    for palabra_clave, respuesta in RESPUESTAS.items():
-
-        if palabra_clave in mensaje:
-            return f"{NOMBRE_BOT}: {respuesta}"
-
-    return f"{NOMBRE_BOT}: Lo siento, todavía no tengo información sobre ese tema."
+    return f"{NOMBRE_BOT}: No entendí tu pregunta. ¿Podrías explicarla de otra manera?"
 
 SINONIMOS = {
     "altar": "ofrenda",
     "calaca": "catrina",
     "pan": "pan de muerto"
 }
+
+INTENCIONES = {
+    "historia": [
+        "dia de muertos",
+        "origen",
+        "historia",
+        "celebra",
+        "noviembre"
+    ],
+
+    "ofrenda": [
+        "ofrenda",
+        "altar",
+        "vela",
+        "flores",
+        "cempasuchil"
+    ],
+
+    "catrina": [
+        "catrina",
+        "calaca"
+    ],
+
+    "pan": [
+        "pan",
+        "pan de muerto"
+    ],
+
+    "mascotas": [
+        "mascota",
+        "perro",
+        "gato"
+    ]
+}
+
+def detectar_intencion(mensaje):
+
+    for intencion, palabras in INTENCIONES.items():
+
+        for palabra in palabras:
+
+            if palabra in mensaje:
+                return intencion
+
+    return None
