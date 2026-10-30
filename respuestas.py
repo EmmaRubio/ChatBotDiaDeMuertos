@@ -1,16 +1,16 @@
 RESPUESTAS = {
     "historia":
-        "El Día de Muertos es una tradición mexicana que honra y recuerda a los seres queridos fallecidos.",
+        "El Día de Muertos es una tradición mexicana para recordar a los seres queridos fallecidos.",
 
     "ofrenda":
-        "La ofrenda es un altar que contiene fotografías, velas, flores y alimentos para recordar a quienes han fallecido.",
+        "La ofrenda es un altar donde se colocan elementos para honrar a los difuntos.",
 
     "catrina":
-        "La Catrina es una figura representativa del Día de Muertos inspirada en una obra de José Guadalupe Posada.",
+        "La Catrina es una figura muy representativa del Día de Muertos.",
 
     "pan":
-        "El pan de muerto es un alimento tradicional que suele colocarse en las ofrendas.",
+        "El pan de muerto es un alimento tradicional de esta celebración.",
 
     "mascotas":
-        "Muchas familias también dedican ofrendas a sus mascotas fallecidas para recordarlas con cariño."
+        "También pueden realizarse ofrendas para mascotas fallecidas."
 }
