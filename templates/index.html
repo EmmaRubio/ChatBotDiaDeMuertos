@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pirata de Culiacán</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/estilos.css') }}">
+</head>
+
+<body>
+
+<div class="overlay"></div>
+
+<div class="chat-app">
+
+    <aside class="sidebar">
+
+        <div class="logo">
+            
+        </div>
+
+        <h2>Pirata de Culiacán</h2>
+
+        <p>
+            En vísperas de Día de Muertos, aparece en el cielo la figura del xoloitzcuintle moderno. El Caronte del siglo XXI; el Pirata de Culiacán a bordo de su trocona, y esta vez fue por el Ingeniero Cuauhtémoc Cárdenas
+        </p>
+        <p>La figura del xoloitzcuintle se relaciona con los jóvenes y el Día de Muertos porque simboliza el guía espiritual que cruza entre el cielo y el Mictlán, y hoy los jóvenes reinterpretan ese mito en altares, arte y cultura digital como un puente entre tradición y memoria.</p>
+
+
+    </aside>
+
+    <section class="chat">
+
+        <div class="chat-header">
+
+            <h1>Chat del Día de Muertos</h1>
+
+        </div>
+
+        <div id="mensajes" class="mensajes">
+
+            <div class="mensaje bot">
+
+                <div class="avatar-bot">
+                    
+                </div>
+
+                <div class="burbuja">
+
+                    ¡Hola! Soy el Pirata de Culiacán.
+
+                    <br><br>
+
+                    Puedo ayudarte con:
+
+                    <ul>
+                        <li>Ofrendas</li>
+                        <li>Catrinas</li>
+                        <li>Pan de muerto</li>
+                        <li>Calaveritas</li>
+                        <li>Música</li>
+                        <li>Mascotas</li>
+                    </ul>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="entrada">
+
+            <input
+                id="mensaje"
+                type="text"
+                placeholder="Pregúntame algo sobre el Día de Muertos..."
+            >
+
+            <button id="btnEnviar">
+                Enviar
+            </button>
+
+        </div>
+
+    </section>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+
+</body>
+</html>

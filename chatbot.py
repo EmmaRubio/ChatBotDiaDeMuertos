@@ -1,270 +1,392 @@
-from config import NOMBRE_BOT
-from respuestas import RESPUESTAS
-
+import random
+import re
 import unicodedata
+ 
+from config import (
+    NOMBRE_BOT, PALABRAS_SALIDA, MAX_PALABRAS_SALIDA, LARGO_MINIMO_PREFIJO,
+    MAX_PALABRAS_RESPUESTA_CORTA, MAX_LARGO_DESTINATARIO,
+    LINEA_DE_LA_VIDA, EMERGENCIAS,
+)
 
-# Configuración del bot
-NOMBRE_BOT = "pirataDeCuliacanBot"
-
-# Diccionario ampliado de sinónimos
-SINONIMOS = {
-    "altar": "ofrenda",
-    "panteon": "tumba",
-    "cementerio": "tumba",
-    "calaca": "catrina",
-    "huesos": "pan",
-    "panecito": "pan",
-    "perrito": "mascotas",
-    "gatito": "mascotas",
-    "animales": "mascotas",
-    "origen": "historia",
-    "tradicion": "historia",
-    "mexico": "regiones",
-    "oaxaca": "regiones",
-    "michoacan": "regiones",
-    "rimas": "calaveritas",
-    "poema": "calaveritas",
-    "halloween": "comparacion",
-    "canciones": "musica",
-    "cancion": "musica",
-    "sones": "musica",
-    "melodias": "musica",
-    "recomiendas": "musica",
-    "recomendar": "musica"
-}
-
-# Intenciones principales y sus palabras clave (¡Quitamos "cuales" de aquí para que sea seguimiento!)
-INTENCIONES = {
-    "historia": [
-        "dia de muertos", "origen", "historia", "celebra", "noviembre", 
-        "de donde viene", "antiguo", "aztecas", "prehispanico"
-    ],
-    "ofrenda": [
-        "ofrenda", "altar", "vela", "flores", "cempasuchil", "agua", "sal", 
-        "copal", "papel picado", "comida", "elementos"
-    ],
-    "catrina": [
-        "catrina", "calaca", "garbancera", "jose guadalupe posada", "diego rivera"
-    ],
-    "pan": [
-        "pan", "pan de muerto", "huesitos", "azucar", "ajonjoli"
-    ],
-    "mascotas": [
-        "mascota", "perro", "gato", "animales", "perritos", "gatitos", "fallecio"
-    ],
-    "sincretismo": [
-        "espanoles", "catolicos", "religion", "conquista", "mezcla", "espana"
-    ],
-    "regiones": [
-        "estado", "michoacan", "janitzio", "oaxaca", "xochimilco", "mixquic"
-    ],
-    "calaveritas": [
-        "calaverita", "rimas", "verso", "poema", "inventar", "chusca"
-    ],
-    "comparacion": [
-        "halloween", "gringo", "diferencia", "es lo mismo", "disfraces"
-    ],
-    "filosofia": [
-        "por que se burlan", "miedo a la muerte", "triste", "tabu", "alegria"
-    ],
-    "musica": [
-        "musica", "cancion", "canciones", "cantar", "sones", "corridos", "banda", 
-        "coco", "melodias", "recomiendas", "recomendar"
-    ]
-}
-
-# Base de datos estructurada por niveles (Respuesta inicial + Detalles de seguimiento)
-CONTENIDO = {
-    "historia": {
-        "principal": (
-            "El Día de Muertos es una de las tradiciones más chidas de México bro. "
-            "No es una fiesta triste, sino una celebración colorida donde recordamos y honramos "
-            "a los seres queridos que ya se fueron."
-        ),
-        "seguimiento": [
-            "Para profundizar: combina la visión de los pueblos mesoamericanos (que veían la muerte como una etapa del ciclo) con la influencia católica traída por los españoles.",
-            "¿Sabías que antes se celebraba en agosto durante todo un mes? Con la llegada de España se movió a noviembre para coincidir con el calendario católico."
-        ]
-    },
-    "ofrenda": {
-        "principal": (
-            "Una ofrenda o altar es una guía llena de simbolismo para honrar a quienes se adelantaron bro."
-        ),
-        "seguimiento": [
-            "Cada nivel del altar tiene sentido: el piso representa la tierra, el medio el purgatorio y el cielo arriba. Además, se pone un vaso con agua para calmar la sed de las ánimas tras su largo viaje.",
-            "También se incluye sal para purificar el espíritu y un caminito de pétalos de cempasúchil para que no se pierdan rumbo a casa."
-        ]
-    },
-    "catrina": {
-        "principal": (
-            "La famosa 'Calavera Garbancera' fue creada por José Guadalupe Posada bro "
-            "a principios del siglo XX como una crítica satírica a los mexicanos que querían aparentar ser europeos."
-        ),
-        "seguimiento": [
-            "Posada la dibujó sin ropa para mostrar que, al final, ricos o pobres, todos calzamos igual ante la muerte.",
-            "Años después, Diego Rivera la inmortalizó con su sombrero elegante y estola de plumas en su mural 'Sueño de una tarde dominical en la Alameda Central', bautizándola oficialmente como 'La Catrina'."
-        ]
-    },
-    "pan": {
-        "principal": (
-            "El pan de muerto es delicioso y cada parte tiene un significado especial: "
-            "la bolita de arriba representa el cráneo y las tiras simulan los huesos."
-        ),
-        "seguimiento": [
-            "Las cuatro tiras de los huesos también representan los cuatro puntos cardinales consagrados a los dioses prehispánicos (como Tezcatlipoca o Tláloc).",
-            "El toque de azúcar roja o ajonjolí simboliza las lágrimas derramadas por los que ya no están."
-        ]
-    },
-    "mascotas": {
-        "principal": (
-            "¡Claro que se les pone ofrenda bro! Los animalitos también se merecen su espacio especial "
-            "el 27 de octubre para recordar el amor incondicional que nos dieron."
-        ),
-        "seguimiento": [
-            "Puedes colocarles sus croquetas favoritas, agua fresca, un juguetito que les encantaba y una veladora pequeña.",
-            "Se cree que los perritos son nuestros fieles guías para cruzar al Mictlán, por lo que honrarlos es una hermosa forma de agradecerles."
-        ]
-    },
-    "sincretismo": {
-        "principal": (
-            "Es una mezcla fascinante de culturas (sincretismo). Los pueblos indígenas ya tenían rituales "
-            "dedicados a sus muertos y los españoles trajeron el calendario católico de Fieles Difuntos."
-        ),
-        "seguimiento": [
-            "Fechas como el 1 y 2 de noviembre fueron establecidas por la Iglesia Católica para unirse con las celebraciones prehispánicas que ya existían en esas épocas de cosecha.",
-            "Esta fusión hizo que la muerte se viera con una mezcla de respeto sagrado y fiesta popular."
-        ]
-    },
-    "regiones": {
-        "principal": (
-            "Aunque todo México lo celebra, cada estado tiene su magia única. "
-            "Por ejemplo, Janitzio en Michoacán o Mixquic en la CDMX viven la tradición de forma impresionante."
-        ),
-        "seguimiento": [
-            "En Janitzio, la gente hace procesiones nocturnas en lanchas iluminadas con miles de velas hacia el panteón de la isla.",
-            "En Oaxaca se arman comparsas con música de banda y disfraces increíbles que duran toda la madrugada."
-        ]
-    },
-    "calaveritas": {
-        "principal": (
-            "Las calaveritas literarias son rimas irónicas y divertidas donde personificamos a la Muerte "
-            "llevándose a alguien de forma chusca."
-        ),
-        "seguimiento": [
-            "Ejemplo:\n*La huesuda andaba buscando por toda la secundaria,\n a ver quién debía tareas en la clase de matemáticas.*\n",
-            "¿Quieres que inventemos una personalizada para algún amigo o maestro?"
-        ]
-    },
-    "comparacion": {
-        "principal": (
-            "No son lo mismo. Halloween (31 de octubre) tiene raíces celtas enfocadas en disfraces para espantar monstruos. "
-            "El Día de Muertos (1 y 2 de noviembre) es una tradición mexicana de memoria y altares."
-        ),
-        "seguimiento": [
-            "Mientras Halloween busca asustar y pedir dulces con un toque de misterio, el Día de Muertos busca acoger con alegría y respeto a las almas de nuestros seres queridos.",
-            "Ambas fechas conviven cerca en el calendario, pero su significado cultural es completamente distinto."
-        ]
-    },
-    "filosofia": {
-        "principal": (
-            "En México no nos burlamos de la muerte por falta de respeto, sino como una forma de perderle el miedo "
-            "y aceptarla como parte natural de la existencia."
-        ),
-        "seguimiento": [
-            "Las calaveritas de azúcar o el pan con forma de huesos nos recuerdan que, tarde o temprano, todos terminaremos igual, así que lo mejor es vivir con alegría.",
-            "Es una forma de vencer al olvido: mientras recuerdes a alguien con amor, esa persona sigue viva en tu memoria."
-        ]
-    },
-    "musica": {
-        "principal": (
-            "La música del Día de Muertos simboliza la conexión entre vivos y difuntos, mezclando raíces indígenas "
-            "y católicas para honrar y celebrar el tránsito al más allá. Las canciones más representativas "
-            "no son solo las de Coco; México es tan diverso que vale la pena explorar nuestra propia riqueza musical."
-        ),
-        "seguimiento": [
-            "Te recomiendo escuchar: *La Martiniana* (un son istmeño precioso), *Canción Mixteca*, el himno fúnebre tradicional *Dios Nunca Muere*, y *La Bruja* con su toque jarochísimo.",
-            "También están clásicos modernos y populares como *Amor Eterno* de Juan Gabriel o *Las Golondrinas*, ideales para recordar a los que ya se fueron con muchísimo sentimiento."
-        ]
-    }
-}
-
-# Variables de control de estado de la sesión
-ULTIMA_INTENCION = None
-INDICE_SEGUIMIENTO = 0
-
+from respuestas import (
+    SINONIMOS, CONTENIDO, SUBTEMAS,
+    PLANTILLAS_CALAVERITA, DESTINATARIOS_NO_VALIDOS,
+    CONVERSACION, SALUDO_INICIAL, DESPEDIDAS,
+    AFIRMATIVAS, NEGATIVAS, RESPUESTAS_NEGATIVAS,
+    FRASES_SEGUIMIENTO, NO_ENTENDI, VACIO,
+    CRISIS, CASOS_DELICADOS,
+)
+ 
+ 
 def limpiar_texto(texto):
-    """Convierte el texto a minúsculas, elimina espacios extra y acentos."""
+    """Minúsculas, sin acentos, sin signos (¿?¡!,.) y sin espacios repetidos."""
     texto = texto.lower().strip()
-    return ''.join(
-        caracter for caracter in unicodedata.normalize('NFD', texto)
-        if unicodedata.category(caracter) != 'Mn'
+    # NFD separa la letra de su acento ("é" -> "e" + "´"); luego quitamos los acentos.
+    texto = "".join(
+        c for c in unicodedata.normalize("NFD", texto)
+        if unicodedata.category(c) != "Mn"
     )
-
-def detectar_intencion(mensaje):
-    """Identifica la intención del usuario aplicando sinónimos y palabras clave."""
-    for sinomimo, objetivo in SINONIMOS.items():
-        if sinomimo in mensaje:
-            mensaje = mensaje.replace(sinomimo, objetivo)
-
-    for intencion, palabras in INTENCIONES.items():
-        for palabra in palabras:
-            if palabra in mensaje:
-                return intencion
-    return None
-
+    # Todo lo que no sea letra, número o espacio se vuelve espacio.
+    texto = re.sub(r"[^a-z0-9\s]", " ", texto)
+    # Dejamos un solo espacio entre palabras.
+    return " ".join(texto.split())
+ 
+ 
+def aplicar_sinonimos(mensaje):
+    """Cambia cada PALABRA COMPLETA por su sinónimo (si tiene uno)."""
+    return " ".join(SINONIMOS.get(palabra, palabra) for palabra in mensaje.split())
+ 
+ 
+def contiene(mensaje, palabra):
+    """
+    ¿Aparece 'palabra' en el mensaje como palabra completa?
+    - Palabras cortas (menos de LARGO_MINIMO_PREFIJO letras): deben ser exactas.
+      Así "pan" no se confunde con "es-pan-oles".
+    - Palabras largas: basta que sea el INICIO de una palabra.
+      Así "mascota" también encuentra "mascotas".
+    """
+    if len(palabra) >= LARGO_MINIMO_PREFIJO:
+        return (" " + palabra) in (" " + mensaje)
+    return (" " + palabra + " ") in (" " + mensaje + " ")
+ 
+ 
+def contiene_alguna(mensaje, palabras):
+    """True si el mensaje contiene al menos una de las palabras/frases."""
+    return any(contiene(mensaje, p) for p in palabras)
+ 
+ 
+def puntuar_temas(mensaje, solo=None):
+    """
+    Da puntos a cada tema según las palabras clave encontradas.
+    Una frase de 3 palabras ("pan de muerto") vale 3 puntos: es más específica.
+    Si 'solo' es una lista, únicamente puntúa esos temas.
+    """
+    puntos = {}
+    for nombre, datos in CONTENIDO.items():
+        if solo is not None and nombre not in solo:
+            continue
+        puntos[nombre] = sum(
+            len(p.split()) for p in datos["palabras_clave"] if contiene(mensaje, p)
+        )
+    return puntos
+ 
+ 
+def temas_ganadores(mensaje, solo=None):
+    """Lista de temas con el puntaje más alto (más de uno = empate). Vacía si nadie suma."""
+    puntos = puntuar_temas(mensaje, solo)
+    if not puntos or max(puntos.values()) == 0:
+        return []
+    maximo = max(puntos.values())
+    return [nombre for nombre, p in puntos.items() if p == maximo]
+ 
+ 
+def _es_corto(mensaje):
+    return len(mensaje.split()) <= MAX_PALABRAS_RESPUESTA_CORTA
+ 
+ 
+def es_negativo(mensaje):
+    """Respuesta corta tipo 'no', 'luego', 'así está bien'."""
+    return _es_corto(mensaje) and contiene_alguna(mensaje, NEGATIVAS)
+ 
+ 
+def es_afirmativo(mensaje):
+    """Respuesta corta tipo 'sí', 'va', 'dale'."""
+    return _es_corto(mensaje) and not es_negativo(mensaje) and contiene_alguna(mensaje, AFIRMATIVAS)
+ 
+ 
 def es_frase_seguimiento(mensaje):
-    """Detecta frases cortas de continuidad conversacional (incluyendo 'cuales', 'como', etc.)."""
-    frases_seguimiento = [
-        "y que", "que mas", "cuentame mas", "explicame mas", "y luego", 
-        "por que", "como", "detalle", "mas", "a ver", "platicame", 
-        "cual", "cuales", "y eso", "eso que es", "y que mas", "y despues",
-        "recomienda", "recomiendas"
-    ]
-    return any(f in mensaje for f in frases_seguimiento)
+    """¿Pide continuar con el tema actual? ('cuéntame más', 'y qué más')."""
+    return contiene_alguna(mensaje, FRASES_SEGUIMIENTO)
+ 
+ 
+def extraer_destinatario(mensaje_original):
+    """
+    Busca "para ..." en el mensaje original (con acentos y mayúsculas) y devuelve
+    a quién va dirigida la calaverita. Ejemplo:
+      "una calaverita para mi profesor de matemáticas que deja tarea"
+      -> "mi profesor de matemáticas"
+    Devuelve None si no encuentra algo válido.
+    """
+    patron = re.compile(
+        r"\bpara\s+(.+?)(?:\s+que\s|\s+porque\s|[,.?!;:]|$)", re.IGNORECASE
+    )
+    coincidencia = patron.search(mensaje_original)
+    if not coincidencia:
+        return None
+    return _validar_destinatario(coincidencia.group(1))
+ 
+ 
+def _validar_destinatario(texto):
+    """Limpia y valida el texto; devuelve None si no sirve."""
+    texto = texto.strip(" .,;:¿?¡!\"'")
+    if len(texto) < 3 or len(texto) > MAX_LARGO_DESTINATARIO:
+        return None
+    if limpiar_texto(texto) in DESTINATARIOS_NO_VALIDOS:
+        return None
+    return texto
+ 
+ 
+def unir_con_y(elementos):
+    """['a', 'b', 'c'] -> 'a, b y c'."""
+    if len(elementos) <= 1:
+        return "".join(elementos)
+    return ", ".join(elementos[:-1]) + " y " + elementos[-1]
+ 
+ 
+class Chatbot:
+    def __init__(self):
+        self.ultima_intencion = None   # tema del que hablamos ahora
+        self.indice_seguimiento = 0    # cuántos detalles ya dimos de ese tema
+        self.temas_vistos = set()      # temas que ya tocamos (para no repetir sugerencias)
+        self.esperando = None          # pregunta pendiente: {"tipo": ..., "datos": ...}
+        self.ultima_sugerencia = None  # para no repetir la misma sugerencia seguida
+        self.calaveritas_hechas = 0    # para variar las plantillas de calaverita
+        self.terminado = False         # True cuando el usuario se despide
+ 
+    def saludo_inicial(self):
+        return SALUDO_INICIAL.format(nombre=NOMBRE_BOT)
+ 
+    def responder(self, mensaje):
+        """Recibe lo que escribió el usuario y devuelve el texto de respuesta."""
+        limpio = limpiar_texto(mensaje)
+        if not limpio:
+            return VACIO
+        procesado = aplicar_sinonimos(limpio)
+ 
+        # 1. ¿Se despide?
+        if len(limpio.split()) <= MAX_PALABRAS_SALIDA and contiene_alguna(limpio, PALABRAS_SALIDA):
+            self.terminado = True
+            return random.choice(DESPEDIDAS)
+ 
+        # 2. ¿Hay una situación de riesgo? (prioridad máxima)
+        if self._hay_crisis(limpio):
+            self.esperando = None
+            return CRISIS["respuesta"].format(linea=LINEA_DE_LA_VIDA, emergencias=EMERGENCIAS)
+ 
+        # 3. ¿Está contestando una pregunta que el bot hizo antes?
+        respuesta = self._resolver_pendiente(mensaje, limpio, procesado)
+        if respuesta:
+            return respuesta
+ 
+        # 4. ¿Es un caso delicado (duelo)?
+        respuesta = self._caso_delicado(procesado)
+        if respuesta:
+            return respuesta
+ 
+        # 5. Temas, charla casual, seguimiento...
+        return self._responder_tema(mensaje, limpio, procesado)
+ 
+    def _hay_crisis(self, limpio):
+        return (
+            contiene_alguna(limpio, CRISIS["palabras_clave"])
+            and not contiene_alguna(limpio, CRISIS["exclusiones"])
+        )
+ 
+    def _caso_delicado(self, procesado):
+        for caso in CASOS_DELICADOS.values():
+            # El mensaje debe tener al menos una palabra de CADA grupo
+            if all(contiene_alguna(procesado, grupo) for grupo in caso["grupos"]):
+                if caso["tema"]:
+                    self.ultima_intencion = caso["tema"]
+                    self.indice_seguimiento = 0
+                    self.temas_vistos.add(caso["tema"])
+                tipo, datos = caso["pendiente"]
+                self.esperando = {"tipo": tipo, "datos": datos}
+                return caso["respuesta"]
+        return None
 
-def generar_respuesta(mensaje):
-    """Procesa el mensaje priorizando nuevas intenciones reales antes de evaluar el seguimiento."""
-    global ULTIMA_INTENCION, INDICE_SEGUIMIENTO
+    def _resolver_pendiente(self, mensaje, limpio, procesado):
+        if not self.esperando:
+            return None
+        pendiente = self.esperando
+        self.esperando = None  # lo limpiamos; si hace falta, se vuelve a poner
+        tipo, datos = pendiente["tipo"], pendiente["datos"]
+ 
+        # El bot preguntó "¿para quién es la calaverita?"
+        if tipo == "calaverita_destinatario":
+            if es_negativo(limpio):
+                return random.choice(RESPUESTAS_NEGATIVAS)
+            if es_afirmativo(limpio):
+                self.esperando = pendiente
+                return "¡Va! ¿Para quién la hacemos? Por ejemplo: 'mi profe de mate' o 'mi amigo Luis'."
+            if "?" in mensaje:  # parece una pregunta nueva, no un nombre
+                return None
+            destinatario = extraer_destinatario(mensaje) or _validar_destinatario(mensaje)
+            return self._entregar_calaverita(destinatario) if destinatario else None
+ 
+        # El bot preguntó "¿te refieres a A o a B?"
+        if tipo == "aclarar":
+            return self._resolver_aclaracion(datos, limpio, procesado)
+ 
+        # Preguntas de sí/no
+        if es_negativo(limpio):
+            return random.choice(RESPUESTAS_NEGATIVAS)
+        if es_afirmativo(limpio):
+            if tipo == "tema":
+                return self._dar_tema(datos)
+            if tipo == "seguir":
+                return self._dar_seguimiento()
+            if tipo == "calaverita_otra":
+                return self._entregar_calaverita(datos)
+        return None  # no era respuesta a lo pendiente: seguimos el flujo normal
+ 
+    def _resolver_aclaracion(self, candidatos, limpio, procesado):
+        a, b = candidatos
+        if contiene_alguna(limpio, ["los dos", "las dos", "ambos", "ambas"]):
+            return self._dar_tema(a, siguiente=b)
+        if contiene_alguna(limpio, ["primero", "primera", "1"]):
+            return self._dar_tema(a)
+        if contiene_alguna(limpio, ["segundo", "segunda", "2"]):
+            return self._dar_tema(b)
+        ganadores = temas_ganadores(procesado, solo=[a, b])
+        if len(ganadores) == 1:
+            return self._dar_tema(ganadores[0])
+        return None
     
-    mensaje_limpio = limpiar_texto(mensaje)
-    
-    # 1. Verificamos si es una frase de seguimiento Y hay una intención activa
-    # (Esto se evalúa ANTES para que palabras como "cuales" o "recomiendas" avancen en el tema actual)
-    if es_frase_seguimiento(mensaje_limpio) and ULTIMA_INTENCION:
-        datos_intencion = CONTENIDO[ULTIMA_INTENCION]
-        lista_seguimiento = datos_intencion["seguimiento"]
-        
-        if INDICE_SEGUIMIENTO < len(lista_seguimiento):
-            respuesta = lista_seguimiento[INDICE_SEGUIMIENTO]
-            INDICE_SEGUIMIENTO += 1
-            return f"{NOMBRE_BOT}: {respuesta}"
-        else:
-            return f"{NOMBRE_BOT}: ¡Ya te conté todo lo principal sobre este tema! ¿Quieres que hablemos de otra cosa como la música, el pan de muerto, las catrinas o las mascotas?"
+    def _responder_tema(self, mensaje, limpio, procesado):
 
-    # 2. Si no es seguimiento, comprobamos si introduce un TEMA NUEVO completamente distinto
-    nueva_intencion = detectar_intencion(mensaje_limpio)
-    
-    if nueva_intencion:
-        ULTIMA_INTENCION = nueva_intencion
-        INDICE_SEGUIMIENTO = 0  # Reiniciar el índice de seguimiento para el nuevo tema
-        return f"{NOMBRE_BOT}: {CONTENIDO[nueva_intencion]['principal']}"
+        for palabra, respuesta in SUBTEMAS.items():
+         if contiene(procesado, palabra):
+            return respuesta
 
-    # 3. Si no entra en ninguna categoría
-    return (
-        f"{NOMBRE_BOT}: ¡Mmm, esa pregunta está interesante pero no la capté bien! "
-        "Prueba preguntándome sobre la música, la ofrenda, la historia, el pan de muerto, las mascotas o las catrinas."
+         if "volver a ver" in procesado and ("familiar" in procesado or "abuelita" in procesado or "persona" in procesado):
+          return (
+        "Esa es una pregunta que muchas personas se hacen. "
+        "Las respuestas dependen de las creencias de cada quien. "
+        "Algunas religiones creen en un reencuentro después de la muerte, "
+        "mientras que la ciencia no puede confirmarlo. "
+        "Lo que sí podemos hacer es mantener vivos los recuerdos de quienes amamos."
+        )
+        if "foto" in procesado and (
+    "altar" in procesado
+    or "ofrenda" in procesado
+):
+         return (
+        "Tienes razón: una fotografía no hace regresar físicamente a una persona. "
+        "Su función es recordarla, compartir historias sobre ella y mantener viva su memoria dentro de la familia."
     )
 
-# --- Bloque principal para ejecución en consola ---
-if __name__ == "__main__":
-    print(f"🤖 Bienvenido a {NOMBRE_BOT}")
-    print("Escribe 'salir' para terminar.\n")
-    
-    while True:
-        entrada_usuario = input("Tú: ")
-        if entrada_usuario.lower() in ["salir", "exit", "adios"]:
-            print(f"{NOMBRE_BOT}: ¡Nos vemos! Que disfrutes mucho el Día de Muertos.")
-            break
-        
-        respuesta_bot = generar_respuesta(entrada_usuario)
-        print(f"\n{respuesta_bot}\n")
+        ganadores = temas_ganadores(procesado)
+ 
+        # Si solo dice "día de muertos" (sin nada más específico): pregunta general.
+        if not ganadores and contiene(procesado, "dia de muertos"):
+            ganadores = ["historia"]
+ 
+        # EMPATE: si uno es el tema actual, gana por contexto; si no, preguntamos.
+        if len(ganadores) > 1:
+            if self.ultima_intencion in ganadores:
+                ganadores = [self.ultima_intencion]
+            else:
+                return self._preguntar_aclaracion(ganadores[0], ganadores[1])
+ 
+        nueva = ganadores[0] if ganadores else None
+ 
+        # Calaveritas: si trae destinatario ("para mi profe"), la escribimos ya.
+        if nueva == "calaveritas":
+            destinatario = extraer_destinatario(mensaje)
+            if destinatario:
+                return self._entregar_calaverita(destinatario)
+ 
+        if nueva and nueva != self.ultima_intencion:
+            return self._dar_tema(nueva)          # tema NUEVO
+        if nueva and nueva == self.ultima_intencion:
+            return self._dar_seguimiento()        # mismo tema: damos más detalle
+ 
+        # Charla casual (hola, gracias, ayuda)
+        charla = self._charla(procesado)
+        if charla:
+            return charla
+ 
+        # "Cuéntame más" sin tema de por medio
+        if es_frase_seguimiento(limpio):
+            if self.ultima_intencion:
+                return self._dar_seguimiento()
+            return f"¿Sobre qué quieres que te cuente más? Puedo hablar sobre {self._menu_temas()}."
+ 
+        return random.choice(NO_ENTENDI).format(temas=self._menu_temas())
+ 
+    def _dar_tema(self, tema, siguiente=None):
+        """Da la respuesta principal de un tema y deja listo el contexto."""
+        self.ultima_intencion = tema
+        self.indice_seguimiento = 0
+        self.temas_vistos.add(tema)
+ 
+        if tema == "calaveritas":
+            # Tema especial: después de explicar, esperamos a quién va dirigida
+            self.esperando = {"tipo": "calaverita_destinatario", "datos": None}
+            return CONTENIDO[tema]["principal"]
+ 
+        texto = CONTENIDO[tema]["principal"]
+        if siguiente:
+            self.esperando = {"tipo": "tema", "datos": siguiente}
+            texto += f"\n\nDespués, si quieres, vemos {CONTENIDO[siguiente]['etiqueta']}. ¿Va?"
+        else:
+            texto += self._sugerencia(tema)
+        return texto
+ 
+    def _dar_seguimiento(self):
+        """Siguiente detalle del tema actual."""
+        tema = self.ultima_intencion
+        detalles = CONTENIDO[tema]["seguimiento"]
+ 
+        if self.indice_seguimiento < len(detalles):
+            texto = detalles[self.indice_seguimiento]
+            self.indice_seguimiento += 1
+            if self.indice_seguimiento == len(detalles):  # era el último: proponemos algo nuevo
+                texto += self._sugerencia(tema)
+            return texto
+ 
+        # Ya no hay más detalles
+        texto = "Ya te conté lo más importante de este tema. 😄"
+        sugerencia = self._sugerencia(tema)
+        if sugerencia:
+            return texto + sugerencia
+        return texto + f" ¿Quieres que veamos {self._menu_temas()}?"
+ 
+
+    def _sugerencia(self, tema):
+        """
+        Propone un tema relacionado que el usuario aún no ha visto (proactividad)
+        y deja una pregunta pendiente: si responde "sí", se lo contamos.
+        """
+        for texto, destino in CONTENIDO[tema]["sugerencias"]:
+            if destino not in self.temas_vistos and texto != self.ultima_sugerencia:
+                self.ultima_sugerencia = texto
+                self.esperando = {"tipo": "tema", "datos": destino}
+                return "\n\n" + texto
+        return ""
+ 
+    def _preguntar_aclaracion(self, a, b):
+        """Hay empate entre dos temas: se lo preguntamos al usuario."""
+        self.esperando = {"tipo": "aclarar", "datos": (a, b)}
+        return (
+            f"Mmm, ¿quieres que te platique sobre {CONTENIDO[a]['etiqueta']} "
+            f"o sobre {CONTENIDO[b]['etiqueta']}?"
+        )
+ 
+    def _menu_temas(self):
+        """Hasta 3 temas que aún no vimos, escritos de forma natural: 'a, b y c'."""
+        nuevos = [t for t in CONTENIDO if t not in self.temas_vistos]
+        elegidos = (nuevos or list(CONTENIDO))[:3]
+        return unir_con_y([CONTENIDO[t]["etiqueta"] for t in elegidos])
+ 
+    def _charla(self, procesado):
+        for datos in CONVERSACION.values():
+            if contiene_alguna(procesado, datos["palabras_clave"]):
+                return random.choice(datos["respuestas"]).format(
+                    nombre=NOMBRE_BOT, temas=self._menu_temas()
+                )
+        return None
+ 
+    def _entregar_calaverita(self, destinatario):
+        plantilla = PLANTILLAS_CALAVERITA[self.calaveritas_hechas % len(PLANTILLAS_CALAVERITA)]
+        self.calaveritas_hechas += 1
+        self.ultima_intencion = "calaveritas"
+        self.indice_seguimiento = 0
+        self.temas_vistos.add("calaveritas")
+        self.esperando = {"tipo": "calaverita_otra", "datos": destinatario}
+        return (
+            "¡Va! Aquí está tu calaverita, con mucho cariño:\n\n"
+            + plantilla.format(x=destinatario)
+            + "\n\n¿Quieres otra versión?"
+        )
