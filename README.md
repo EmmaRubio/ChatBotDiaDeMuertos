@@ -27,12 +27,13 @@ El sistema busca explicar de manera clara y sencilla temas como:
 
 # Tecnologías utilizadas
 
-- Python 3
-- Visual Studio Code
-- Git
-- GitHub
+- Flask
+- HTML5
+- CSS3
+- JavaScript
+- Render (despliegue web)
 
-Bibliotecas utilizadas:
+# Bibliotecas utilizadas:
 
 ```python
 random
@@ -49,12 +50,28 @@ No se utilizan dependencias externas.
 ```text
 ChatBotDiaDeMuertos/
 │
+├── app.py
 ├── main.py
 ├── chatbot.py
 ├── respuestas.py
 ├── config.py
+├── Procfile
 ├── README.md
 ├── requirements.txt
+│
+├── templates/
+│   └── index.html
+│
+├── static/
+│   ├── css/
+│   │   └── estilos.css
+│   │
+│   ├── js/
+│   │   └── chat.js
+│   │
+│   └── img/
+│       └── Pirata.avif
+│
 └── .gitignore
 ```
 
@@ -280,16 +297,45 @@ Una ofrenda suele llevar flores de cempasúchil, velas, fotografías, comida y o
 - Respuestas educativas.
 - Casos delicados.
 - Calaveritas automáticas.
+- Interfaz web tipo chatbot.
+- Conversación mediante navegador.
+- Fondo personalizado con imagen temática.
 
 
-Actualmente el chatbot:
+# Actualmente el chatbot:
 
 - No utiliza Inteligencia Artificial generativa.
 - No aprende de nuevas conversaciones.
 - No almacena conversaciones.
 - No utiliza bases de datos.
-- No cuenta con interfaz gráfica.
 - Depende de palabras clave para identificar temas.
+
+# Versión Web
+
+El proyecto cuenta con una interfaz web desarrollada con Flask, HTML, CSS y JavaScript.
+
+La interfaz permite:
+
+- Conversar mediante navegador.
+- Visualizar mensajes en formato tipo chat.
+- Utilizar una imagen de fondo personalizada.
+- Mantener una experiencia amigable para estudiantes de secundaria.
+
+Arquitectura:
+
+```text
+Usuario
+   ↓
+Navegador
+   ↓
+HTML + CSS + JavaScript
+   ↓
+Flask
+   ↓
+Motor del chatbot
+   ↓
+Respuesta
+```
 
 
 # Autores
