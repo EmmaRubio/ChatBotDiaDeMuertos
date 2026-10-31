@@ -6,6 +6,8 @@ Su objetivo es ayudar a estudiantes de secundaria a aprender sobre la historia, 
 
 ---
 
+# Link para entrar al chatbot: https://canva.link/6cctm36c9xzc9b8
+
 # Objetivo
 
 Desarrollar un chatbot capaz de responder preguntas sobre el Día de Muertos utilizando técnicas básicas de Procesamiento de Lenguaje Natural (NLP), manteniendo una conversación contextual y amigable para adolescentes de entre 12 y 15 años.
@@ -33,7 +35,6 @@ El sistema busca explicar de manera clara y sencilla temas como:
 - JavaScript
 - Render (despliegue web)
 
-#Link para entrar al chatbot: https://canva.link/6cctm36c9xzc9b8
 
 # Bibliotecas utilizadas:
 
