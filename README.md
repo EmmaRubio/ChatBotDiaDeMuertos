@@ -33,6 +33,8 @@ El sistema busca explicar de manera clara y sencilla temas como:
 - JavaScript
 - Render (despliegue web)
 
+#Link para entrar al chatbot: https://canva.link/6cctm36c9xzc9b8
+
 # Bibliotecas utilizadas:
 
 ```python
